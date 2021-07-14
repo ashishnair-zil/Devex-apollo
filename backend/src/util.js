@@ -1,6 +1,7 @@
 import crypto from '@zilliqa-js/crypto'
 import moment from 'moment-timezone';
-import { BN, units } from '@zilliqa-js/util';
+import pkg from '@zilliqa-js/util';
+const { BN, units } = pkg;
 
 const { getAddressFromPublicKey, toBech32Address, fromBech32Address } = crypto
 

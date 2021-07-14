@@ -20,14 +20,14 @@ const app = express();
 app.use(cors());
 
 mongoose.connect(process.env.DOCUMENTDB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true,
-    useFindAndModify: false
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+  useFindAndModify: false
 });
 
 app.get('/ping', (req, res) => {
-    res.send('Server says Hello!!!');
+  res.send('Server says Hello!!!');
 });
 
 app.use('/api', api.init());
