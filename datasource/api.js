@@ -172,6 +172,107 @@ class Api {
       return false;
     else return false;
   }
+
+  async getContractState(txns) {
+    const addrArr = [];
+    const data = txns.map((txn, index) => {
+      addrArr[index] = txn.toAddr;
+      return {
+        id: "1",
+        jsonrpc: "2.0",
+        method: "GetSmartContractState",
+        params: [`${stripHexPrefix(txn.toAddr)}`],
+      }
+    });
+
+    const response = await fetch(this.networkUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const parsedRes = await response.json();
+
+    const contractArr = [];
+    await txns.map((txn, index) => {
+      if (!parsedRes[index].error) {
+        let contractobj = {};
+        contractobj['address'] = addrArr[index]
+        contractobj['state'] = parsedRes[index] && parsedRes[index].result ? parsedRes[index].result : {};
+        contractArr.push(contractobj);
+      }
+    });
+    return { addrArr, contractArr };
+  }
+
+  async getContractAddrFromTxID(txns) {
+    const data = txns.map((txn) => {
+      if (txn.toAddr && txn.toAddr === "0000000000000000000000000000000000000000") {
+        return {
+          id: txn.ID,
+          jsonrpc: "2.0",
+          method: "GetContractAddressFromTransactionID",
+          params: [`${stripHexPrefix(txn.ID)}`],
+        }
+      }
+    });
+
+    const response = await fetch(this.networkUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const parsedRes = await response.json();
+    const txArr = [];
+    parsedRes.map((row) => {
+      txArr[row.id] = row.result
+    })
+    // console.log("txArr", txArr)
+    txns.map((row) => {
+      if (txArr[row.ID]) {
+        // console.log("txArr[row.ID]", txArr[row.ID])
+        row.contractAddr = `0x${txArr[row.ID]}`;
+      }
+    })
+    // console.log("txns", txns)
+    return txns;
+  }
+
+  async getContractParams(addrs) {
+    const addrArr = [];
+    const data = addrs.map((addr, index) => {
+      addrArr[index] = addr;
+      return {
+        id: "1",
+        jsonrpc: "2.0",
+        method: "GetSmartContractInit",
+        params: [`${stripHexPrefix(addr)}`],
+      }
+    });
+
+    const response = await fetch(this.networkUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const parsedRes = await response.json();
+
+    const contractArr = [];
+    await addrs.map((addr, index) => {
+      if (!parsedRes[index].error) {
+        let contractobj = {};
+        contractobj['address'] = addrArr[index]
+        contractobj['params'] = parsedRes[index] && parsedRes[index].result ? parsedRes[index].result : {};
+        contractArr.push(contractobj);
+      }
+    });
+    return contractArr;
+  }
 }
 
 export default Api;

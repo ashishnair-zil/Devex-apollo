@@ -13,7 +13,7 @@ import {
   txnReducer,
   transitionReducer,
 } from "./mongodb/reducer.js";
-import { TxBlockModel, TxnModel, TransitionModel } from "./mongodb/model.js";
+import { TxBlockModel, TxnModel, TransitionModel, ContractStateModel } from "./mongodb/model.js";
 
 const { ApolloServer } = apollo;
 
@@ -44,6 +44,46 @@ mongoose.connect(config.dbUrl, { ...config.mongooseOpts });
 
 let connection = mongoose.connection;
 
+const getContractState = async (reducedTxns) => {
+
+  const { addrArr, contractArr } = await api.getContractState(reducedTxns);
+
+  const isStateExist = await ContractStateModel.find({ 'address': { $in: addrArr } }, { address: 1, params: 1 });
+
+  const tmpParamArr = [];
+  isStateExist.map((row) => {
+    tmpParamArr[row.address] = row.params;
+  });
+
+  const paramEmptyArr = [];
+  let i = 0
+  await contractArr.map((row) => {
+    if (tmpParamArr[row.address]) {
+      row.params = tmpParamArr[row.address];
+    } else {
+      paramEmptyArr[i] = row.address;
+      i++;
+    }
+    return row;
+  })
+
+  const paramsArr = await api.getContractParams(paramEmptyArr);
+
+  const tmpParamArr1 = [];
+  paramsArr.map((row) => {
+    tmpParamArr1[row.address] = row.params;
+  })
+
+  await contractArr.map((row, index) => {
+    if (tmpParamArr1[row.address]) {
+      row.params = tmpParamArr1[row.address];
+    }
+    return row;
+  })
+
+  return contractArr;
+}
+
 const loadData = async (start, end) => {
   let blocksPerRequest = BLOCKS_PER_REQUEST;
   if (start > end) {
@@ -60,11 +100,15 @@ const loadData = async (start, end) => {
 
       const blocksWithTxs = reducedBlocks.filter(block => block.header.NumTxns !== 0);
 
-      const txns = await api.getTxnBodiesByTxBlocks(blocksWithTxs);
+      let txns = await api.getTxnBodiesByTxBlocks(blocksWithTxs);
+
+      txns = await api.getContractAddrFromTxID(txns);
 
       const reducedTxns = txns.map(txn => txnReducer(txn));
 
       const contractsChecked = await api.checkIfContracts(reducedTxns);
+
+      const contractsState = await getContractState(reducedTxns);
 
       const finalTxns = contractsChecked.map(txn => {
         const blockDetails = reducedBlocks.find(block => {
@@ -103,9 +147,18 @@ const loadData = async (start, end) => {
         })
       )
 
+      await ContractStateModel.bulkWrite(contractsState.map(doc => ({
+        updateOne: {
+          filter: { address: doc.address },
+          update: doc,
+          upsert: true,
+        }
+      })))
+
       console.log(`Added ${finalTxsAdded.length}/${finalTxns.length} txs and ${finalBlocksAdded.length}/${reducedBlocks.length} blocks.`);
 
     } catch (error) {
+      console.log("error", error)
       if (error.code !== 11000) { // 11000 stands for duplicate entry
         console.log(error.message);
       }

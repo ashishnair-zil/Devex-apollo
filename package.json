@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "start-dev": "NODE_ENV=dev node -r dotenv/config index.js",
-    "start": "nodemon -r dotenv/config index.js",
+    "start": "node index.js",
     "start-prod": "node -r dotenv/config index.js"
   },
   "dependencies": {

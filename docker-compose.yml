@@ -1,5 +1,21 @@
 version: "3.7"
 services:
+  devex-apollo:
+    build: .
+    ports:
+      - 5000:5000
+    depends_on:
+      - mongodb_container
+    env_file:
+      - ./.env
+  devex-backend:
+    build: ./backend
+    ports:
+      - 3000:3000
+    depends_on:
+      - mongodb_container
+    env_file:
+      - ./backend/.env
   mongodb_container:
     image: mongo:latest
     environment:

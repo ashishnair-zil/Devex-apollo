@@ -1,0 +1,33 @@
+{
+  "name": "devex-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start-dev": "nodemon -r dotenv/config ./index.js",
+    "start": "node index.js",
+    "start-prod": "node -r dotenv/config index.js"
+  },
+  "dependencies": {
+    "@zilliqa-js/core": "^3.0.0",
+    "@zilliqa-js/crypto": "^3.0.0",
+    "@zilliqa-js/util": "^3.0.0",
+    "@zilliqa-js/zilliqa": "^3.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "jsonschema": "^1.4.0",
+    "moment": "^2.29.1",
+    "moment-timezone": "^0.5.33",
+    "mongodb": "^3.5.9",
+    "mongoose": "^5.10.9",
+    "node-fetch": "^2.6.0"
+  },
+  "devDependencies": {
+    "dotenv": "^8.2.0",
+    "nodemon": "^2.0.4"
+  },
+  "author": "Ashish",
+  "license": "ISC"
+}
