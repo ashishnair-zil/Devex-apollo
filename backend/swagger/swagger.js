@@ -79,14 +79,7 @@ export default {
           "404": {
             "description": "Pet not found"
           }
-        },
-        "security": [
-          {
-            "api_key": [
-
-            ]
-          }
-        ]
+        }
       }
     },
     "/txs/{txsId}": {
@@ -119,14 +112,7 @@ export default {
           "404": {
             "description": "Pet not found"
           }
-        },
-        "security": [
-          {
-            "api_key": [
-
-            ]
-          }
-        ]
+        }
       }
     },
     "/block/{blockId}": {
