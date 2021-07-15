@@ -7,9 +7,9 @@ class Block {
     async searchById(req, res) {
         let result = await TxBlockModel.findOne({ 'customId': req.params.id });
 
-        const perPage = req.query.perPage ? req.query.perPage : parseInt(process.env.PAGE_LIMIT);
+        const perPage = req.query.perPage ? parseInt(req.query.perPage) : parseInt(process.env.PAGE_LIMIT);
 
-        const page = req.query.pageNum ? req.query.pageNum : parseInt(process.env.DEFAULT_PAGE);
+        const page = req.query.pageNum ? parseInt(req.query.pageNum) : parseInt(process.env.DEFAULT_PAGE);
 
         const skip = (page - 1) * perPage;
 

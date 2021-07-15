@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "start-dev": "NODE_ENV=dev node -r dotenv/config index.js"
   },
   "author": "",
   "license": "ISC",
@@ -23,6 +24,7 @@
     "mongodb": "^3.5.9",
     "mongoose": "^5.10.9",
     "node-fetch": "^2.6.0",
+    "swagger-ui-express": "^4.1.6",
     "tslib": "^2.2.0"
   }
 }

@@ -7,6 +7,10 @@ import cors from 'cors';
 
 import mongoose from 'mongoose';
 
+import swaggerUi from 'swagger-ui-express';
+
+import swaggerDocument from './swagger/swagger.js';
+
 import { Routes } from './src/routes.js';
 const api = new Routes(express);
 
@@ -18,6 +22,12 @@ const HOST = '0.0.0.0';
 const app = express();
 
 app.use(cors());
+
+var options = {
+  explorer: true
+};
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, options));
 
 mongoose.connect(process.env.DOCUMENTDB_URI, {
   useNewUrlParser: true,
