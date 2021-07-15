@@ -8,7 +8,7 @@ export default {
     "contact": {},
     "license": {}
   },
-  "host": "localhost:3000",
+  "host": process.env.BASE_URL,
   "basePath": "/api",
   "tags": [],
   "schemes": [
