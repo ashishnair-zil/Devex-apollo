@@ -3,7 +3,7 @@ export default {
   "info": {
     "description": "This is a Block Explorer build on top of  Devex-apollo server.",
     "version": "1.0.5",
-    "title": "Swagger Petstore",
+    "title": "Swagger Devex Server",
     "termsOfService": "",
     "contact": {},
     "license": {}
