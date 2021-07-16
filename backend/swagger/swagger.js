@@ -72,12 +72,42 @@ export default {
         "responses": {
           "200": {
             "description": "successful operation"
+          }
+        }
+      }
+    },
+    "/address/balance/{addressId}": {
+      "get": {
+        "tags": [
+          "address"
+        ],
+        "summary": "Get balance of address",
+        "description": "Returns balance of address",
+        "operationId": "getBalance",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "addressId",
+            "in": "path",
+            "description": "Record of address to return",
+            "required": true,
+            "type": "string",
+            "format": "Bech32"
           },
-          "400": {
-            "description": "Invalid ID supplied"
-          },
-          "404": {
-            "description": "Pet not found"
+          {
+            "name": "contractAddr",
+            "in": "query",
+            "description": "Record of contractAddr to return",
+            "required": false,
+            "type": "string",
+            "format": "Bech32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
           }
         }
       }
@@ -105,12 +135,6 @@ export default {
         "responses": {
           "200": {
             "description": "successful operation"
-          },
-          "400": {
-            "description": "Invalid ID supplied"
-          },
-          "404": {
-            "description": "Pet not found"
           }
         }
       }
@@ -154,12 +178,6 @@ export default {
         "responses": {
           "200": {
             "description": "successful operation"
-          },
-          "400": {
-            "description": "Invalid ID supplied"
-          },
-          "404": {
-            "description": "Pet not found"
           }
         }
       }

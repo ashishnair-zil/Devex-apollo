@@ -15,6 +15,8 @@ export class Routes {
 
         this.router.get('/address/:id', schemaValidator.validate('contract-address-data'), Address.searchById);
 
+        this.router.get('/address/balance/:id', Address.getBalanceByAddressId);
+
         this.router.get('/block/:id', Block.searchById);
 
         return this.router;

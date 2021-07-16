@@ -5,6 +5,7 @@ class Address {
 
     constructor() {
         this.searchById = this.searchById.bind(this);
+        this.getBalanceByAddressId = this.getBalanceByAddressId.bind(this);
     }
 
     async search(req, res) { }
@@ -79,6 +80,23 @@ class Address {
             currentBalance,
             totalDeductBalance
         }
+    }
+
+    async getBalanceByAddressId(req, res) {
+        const address = convertToBech16Address(req.params.id);
+        let balance = 0;
+        if (req.query.contractAddr) {
+            const contractAddr = convertToBech16Address(req.query.contractAddr);
+
+            balance = await this.getFtToken(address, contractAddr);
+
+            balance = balance && balance[0] && balance[0].balances ? parseFloat(balance[0].balances) : 0;
+        } else {
+            balance = await this.getBalance(address);
+
+            balance = balance && balance.currentBalance ? balance.currentBalance : 0;
+        }
+        return res.json({ 'data': { 'balance': balance } });
     }
 
     async searchById(req, res) {

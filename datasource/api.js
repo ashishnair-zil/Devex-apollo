@@ -176,12 +176,13 @@ class Api {
   async getContractState(txns) {
     const addrArr = [];
     const data = txns.map((txn, index) => {
-      addrArr[index] = txn.toAddr;
+      let toAddr = txn.toAddr && txn.toAddr !== '0x0000000000000000000000000000000000000000' ? txn.toAddr : (txn.contractAddr ? txn.contractAddr : txn.toAddr);
+      addrArr[index] = toAddr;
       return {
         id: "1",
         jsonrpc: "2.0",
         method: "GetSmartContractState",
-        params: [`${stripHexPrefix(txn.toAddr)}`],
+        params: [`${stripHexPrefix(toAddr)}`],
       }
     });
 
