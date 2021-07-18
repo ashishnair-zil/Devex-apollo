@@ -136,7 +136,7 @@ class Address {
                     response.contracts = contracts;
                 }
             } else {
-                response.txs = await this.getTxData(address, skip, perPage);
+                response.txs = await this.getTxData(address, skip, perPage, req.query);
 
                 const contractState = await this.getContractStateByAddress(address);
 
@@ -158,13 +158,87 @@ class Address {
         return await TxnModel.count(condition);
     }
 
-    async getTxData(address, skip, perPage) {
+    async getTxData(address, skip, perPage, filters = null) {
         try {
             let tx = {};
+            let condition = {}
 
-            const condition = { $or: [{ 'fromAddr': address }, { 'toAddr': address }, { 'receipt.transitions.addr': address }, { 'receipt.transitions.msg._recipient': address }, { 'contractAddr': address }] }
+            if (filters && filters.txsType && filters.txsType === 'nfts') {
+                condition = {
+                    $and: [
+                        {
+                            $or: [
+                                { 'fromAddr': address },
+                                { 'toAddr': address },
+                                { 'receipt.transitions.addr': address },
+                                { 'receipt.transitions.msg._recipient': address },
+                                { 'contractAddr': address }]
+                        },
+                        { "receipt.transitions.msg.params.vname": "token_id" }
+                    ]
+                };
+            } else if (filters && filters.txsType && filters.txsType === 'tokens') {
+                condition = {
+                    $and: [
+                        {
+                            $or: [
+                                { 'fromAddr': address },
+                                { 'toAddr': address },
+                                { 'receipt.transitions.addr': address },
+                                { 'receipt.transitions.msg._recipient': address },
+                                { 'contractAddr': address }]
+                        },
+                        { "receipt.transitions.msg.params.vname": "amount" }
+                    ]
+                };
+            } else if (filters && filters.txsType && (filters.txsType === 'normal' || filters.txsType === 'zil')) {
+                condition = {
+                    $and: [
+                        {
+                            $or: [
+                                { 'fromAddr': address },
+                                { 'toAddr': address },
+                                { 'receipt.transitions.addr': address },
+                                { 'receipt.transitions.msg._recipient': address },
+                                { 'contractAddr': address }]
+                        },
+                        { "toAddr": { $ne: '0x0000000000000000000000000000000000000000' } },
+                        { "type": "payment" }
+                    ]
+                };
+            } else if (filters && filters.txsType && (filters.txsType === 'contractCreation' || filters.txsType === 'contract-creation')) {
+                condition = {
+                    $and: [
+                        {
+                            $or: [
+                                { 'fromAddr': address },
+                                { 'toAddr': address },
+                                { 'receipt.transitions.addr': address },
+                                { 'receipt.transitions.msg._recipient': address },
+                                { 'contractAddr': address }]
+                        },
+                        { "toAddr": { $eq: '0x0000000000000000000000000000000000000000' } }
+                    ]
+                };
+            } else if (filters && filters.txsType && (filters.txsType === 'contract' || filters.txsType === 'contract-calls')) {
+                condition = {
+                    $and: [
+                        {
+                            $or: [
+                                { 'fromAddr': address },
+                                { 'toAddr': address },
+                                { 'receipt.transitions.addr': address },
+                                { 'receipt.transitions.msg._recipient': address },
+                                { 'contractAddr': address }]
+                        },
+                        { "type": "contract-call" }
+                    ]
+                };
+            } else {
+                condition = { $or: [{ 'fromAddr': address }, { 'toAddr': address }, { 'receipt.transitions.addr': address }, { 'receipt.transitions.msg._recipient': address }, { 'contractAddr': address }] };
+            }
 
-            tx.totalRecords = await this.getTxCount(address);
+            tx.totalRecords = await TxnModel.count(condition);
 
             tx.numOfPages = Math.ceil(tx.totalRecords / perPage);
 

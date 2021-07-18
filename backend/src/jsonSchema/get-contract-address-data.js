@@ -16,6 +16,9 @@ export default {
         },
         "perPage": {
             "type": "string"
+        },
+        "txsType": {
+            "type": "string"
         }
     },
     "additionalProperties": false

@@ -53,6 +53,14 @@ export default {
             "format": "Bech32"
           },
           {
+            "name": "txsType",
+            "in": "query",
+            "description": "Record of filter transactions",
+            "required": false,
+            "type": "string",
+            "format": "nfts | tokens | zil | contract-creation | contract-calls | all (Default)",
+          },
+          {
             "name": "pageNum",
             "in": "query",
             "description": "Page number of records",
