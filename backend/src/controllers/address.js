@@ -13,9 +13,6 @@ class Address {
     async getBalance(address) {
         let tx = await TxnModel.find({
             $and: [
-                {
-                    "type": "payment"
-                },
                 { 'receipt.success': true },
                 {
                     $or: [{
