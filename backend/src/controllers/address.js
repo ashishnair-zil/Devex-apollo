@@ -57,13 +57,13 @@ class Address {
                     currentBalance += parseFloat(row.amount);
 
                 }
+
+                totalFee += row.receipt.cumulative_gas * row.gasPrice;
             } else {
                 currentBalance = parseFloat(row.amount);
 
                 initialBalance = row.amount;
             }
-
-            totalFee += row.receipt.cumulative_gas * row.gasPrice;
 
             return row;
         });
