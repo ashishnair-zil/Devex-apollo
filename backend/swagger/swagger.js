@@ -120,20 +120,20 @@ export default {
         }
       }
     },
-    "/txs/{txsId}": {
+    "/tx/{txId}": {
       "get": {
         "tags": [
           "transactions"
         ],
         "summary": "Find transactions by ID",
         "description": "Returns record of transactions",
-        "operationId": "getTxsById",
+        "operationId": "getTxById",
         "produces": [
           "application/json"
         ],
         "parameters": [
           {
-            "name": "txsId",
+            "name": "txId",
             "in": "path",
             "description": "Record of transactions to return",
             "required": true,
