@@ -15,6 +15,8 @@ import {
 } from "./mongodb/reducer.js";
 import { TxBlockModel, TxnModel, TransitionModel, ContractStateModel } from "./mongodb/model.js";
 
+import transactions from './transactions.js';
+
 const { ApolloServer } = apollo;
 
 console.log("NODE_ENV: " + process.env.NODE_ENV);
@@ -178,27 +180,28 @@ const loadData = async (start, end) => {
 
 connection.once("open", function () {
   console.log("MongoDB database connection established successfully");
-  api.getLatestTxBlock().then((latestBlock) => {
-    try {
+  transactions.init();
+  // api.getLatestTxBlock().then((latestBlock) => {
+  //   try {
 
-      if (process.env.FAST_SYNC === false) {
-        loadData(latestBlock - 1, 0);
-      }
+  //     if (process.env.FAST_SYNC === false) {
+  //       loadData(latestBlock - 1, 0);
+  //     }
 
-      setInterval(async () => {
-        const latestBlockInNetwork = await api.getLatestTxBlock();
-        TxBlockModel.findOne({ customId: { $lt: 20000000 } }).sort({ customId: -1 }).limit(1).exec((err, res) => {
-          const latestBlockInDB = (res == null) ? 0 : res.customId;
-          console.log(`Blocks need to be synced from ${latestBlockInNetwork} to ${latestBlockInDB}`);
-          loadData(latestBlockInNetwork, latestBlockInDB);
-        });
-      }, 60000);
+  //     setInterval(async () => {
+  //       const latestBlockInNetwork = await api.getLatestTxBlock();
+  //       TxBlockModel.findOne({ customId: { $lt: 20000000 } }).sort({ customId: -1 }).limit(1).exec((err, res) => {
+  //         const latestBlockInDB = (res == null) ? 0 : res.customId;
+  //         console.log(`Blocks need to be synced from ${latestBlockInNetwork} to ${latestBlockInDB}`);
+  //         loadData(latestBlockInNetwork, latestBlockInDB);
+  //       });
+  //     }, 60000);
 
-    } catch (error) {
-      console.error(error);
-      return;
-    }
-  });
+  //   } catch (error) {
+  //     console.error(error);
+  //     return;
+  //   }
+  // });
 });
 
 app.listen(5000, () => {

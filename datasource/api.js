@@ -128,6 +128,9 @@ class Api {
 
   // Get transaction bodies by tx block
   async getTxnBodiesByTxBlocks(blocks) {
+    if (!blocks.length) {
+      return blocks;
+    }
     const data = blocks.map(block => {
       return {
         id: "1",
@@ -208,6 +211,9 @@ class Api {
   }
 
   async getContractAddrFromTxID(txns) {
+    if (!txns.length) {
+      return txns;
+    }
     const data = txns.map((txn) => {
       if (txn.toAddr && txn.toAddr === "0000000000000000000000000000000000000000") {
         return {
