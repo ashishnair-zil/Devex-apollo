@@ -136,7 +136,7 @@ export default {
             "name": "contractAddr",
             "in": "path",
             "description": "Record of contractAddr to return",
-            "required": false,
+            "required": true,
             "type": "string",
             "format": "Bech32"
           }
