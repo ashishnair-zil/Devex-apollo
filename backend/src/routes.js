@@ -17,6 +17,8 @@ export class Routes {
 
         this.router.get('/address/balance/:id', Address.getBalanceByAddressId);
 
+        this.router.get('/address/balance/:id/token/:contractAddr', Address.getTokenBalanceByAddressId);
+
         this.router.get('/block/:id', Block.searchById);
 
         return this.router;

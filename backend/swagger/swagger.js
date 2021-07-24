@@ -103,10 +103,38 @@ export default {
             "required": true,
             "type": "string",
             "format": "Bech32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          }
+        }
+      }
+    },
+    "/address/balance/{addressId}/token/{contractAddr}": {
+      "get": {
+        "tags": [
+          "address"
+        ],
+        "summary": "Get balance of address",
+        "description": "Returns balance of address",
+        "operationId": "getTokenBalance",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "addressId",
+            "in": "path",
+            "description": "Record of address to return",
+            "required": true,
+            "type": "string",
+            "format": "Bech32"
           },
           {
             "name": "contractAddr",
-            "in": "query",
+            "in": "path",
             "description": "Record of contractAddr to return",
             "required": false,
             "type": "string",
