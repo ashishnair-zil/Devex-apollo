@@ -147,8 +147,12 @@ class Api {
       body: JSON.stringify(data),
     });
     const parsedRes = await response.json();
-    const reducedTxs = parsedRes.map(txresult => {
-      return txresult.result;
+    const reducedTxs=[];
+    parsedRes.map(txresult => {
+      if(txresult.result){
+        reducedTxs.push(txresult.result)
+      }
+      return true;
     }).flat();
 
     return reducedTxs;
