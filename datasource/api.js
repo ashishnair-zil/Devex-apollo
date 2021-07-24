@@ -215,7 +215,7 @@ class Api {
       return txns;
     }
     const data = txns.map((txn) => {
-      if (txn.toAddr && txn.toAddr === "0000000000000000000000000000000000000000") {
+      if (txn && txn.toAddr && txn.toAddr === "0000000000000000000000000000000000000000") {
         return {
           id: txn.ID,
           jsonrpc: "2.0",
