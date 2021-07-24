@@ -153,9 +153,9 @@ class Api {
         reducedTxs.push(txresult.result)
       }
       return true;
-    }).flat();
+    });
 
-    return reducedTxs;
+    return reducedTxs.flat();
   }
 
   /* Until we find a better way to differentiate an account address from a smart contract address, we will differentiate based
