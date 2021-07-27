@@ -1,6 +1,6 @@
 import Api from "./datasource/api.js";
-import { TxBlockModel, TxnModel, ContractStateModel } from "./mongodb/model.js";
-import { range } from "./util.js";
+import { TxBlockModel, TxnModel, ContractStateModel, TxQueueModel } from "./mongodb/model.js";
+import { range, removeValuesFromArray } from "./util.js";
 import { txBlockReducer, txnReducer, transitionReducer } from "./mongodb/reducer.js";
 const BLOCKS_PER_REQUEST = parseInt(process.env.BLOCKS_PER_REQUEST);
 
@@ -17,14 +17,16 @@ class Transactions {
             console.log('Process Transactions is running..');
             const latestBlockOnNtk = await this.api.getLatestTxBlock();
             const lastBlockInDB = await TxBlockModel.findOne({ customId: { $lt: 20000000 } }, { customId: 1 }).sort({ customId: -1 }).limit(1);
-            const lastBlockID = lastBlockInDB && lastBlockInDB.customId ? lastBlockInDB.customId : 0;
+            const lastBlockID = lastBlockInDB && lastBlockInDB.customId ? lastBlockInDB.customId + 1 : 0;
             console.log(`lastBlockID: ${lastBlockID} and latestBlockOnNetwork: ${latestBlockOnNtk}`)
             this.loadData(lastBlockID, latestBlockOnNtk);
+
+            this.processTxns();
         } catch (err) {
             console.log('Error in processTransactions')
             console.log(err)
         } finally {
-            setTimeout(() => this.init(), 5000);
+            setTimeout(() => this.init(), 30000);
         }
     }
 
@@ -70,40 +72,42 @@ class Transactions {
 
     async loadData(start, end) {
         if (start < end) {
-
             try {
                 let blocksPerRequest = BLOCKS_PER_REQUEST;
                 if (start + blocksPerRequest > end) {
                     blocksPerRequest = Math.abs(end - start);
                 }
-
+                
                 const blocksRange = [...range(start, start + blocksPerRequest)];
-
+                
                 const txBlocks = await this.api.getTxBlocks(blocksRange);
 
                 const reducedBlocks = txBlocks.map(block => txBlockReducer(block));
 
                 const blocksWithTxs = reducedBlocks.filter(block => block.header.NumTxns !== 0);
 
-                let txns = await this.api.getTxnBodiesByTxBlocks(blocksWithTxs);
+                let txns = await this.api.getTxnIdByTxBlocks(blocksWithTxs);
 
-                txns = await this.api.getContractAddrFromTxID(txns);
+                // console.log("txns", txns);
+                // let txns = await this.api.getTxnBodiesByTxBlocks(blocksWithTxs);
 
-                const reducedTxns = txns.map(txn => txnReducer(txn));
+                // txns = await this.api.getContractAddrFromTxID(txns);
 
-                const contractsChecked = await this.api.checkIfContracts(reducedTxns);
+                // const reducedTxns = txns.map(txn => txnReducer(txn));
 
-                const contractsState = await this.getContractState(reducedTxns);
+                // const contractsChecked = await this.api.checkIfContracts(reducedTxns);
 
-                const finalTxns = contractsChecked.map(txn => {
-                    const blockDetails = reducedBlocks.find(block => {
-                        return parseInt(block.header.BlockNum) === txn.blockId;
-                    });
-                    return {
-                        ...txn,
-                        timestamp: parseInt(blockDetails.header.Timestamp),
-                    }
-                })
+                // const contractsState = await this.getContractState(reducedTxns);
+
+                // const finalTxns = contractsChecked.map(txn => {
+                //     const blockDetails = reducedBlocks.find(block => {
+                //         return parseInt(block.header.BlockNum) === txn.blockId;
+                //     });
+                //     return {
+                //         ...txn,
+                //         timestamp: parseInt(blockDetails.header.Timestamp),
+                //     }
+                // })
 
                 const finalBlocksAdded = await new Promise((resolve, reject) =>
                     TxBlockModel.insertMany(reducedBlocks, { ordered: false }, function (err, result) {
@@ -118,8 +122,21 @@ class Transactions {
                     })
                 )
 
+                // const finalTxsAdded = await new Promise((resolve, reject) =>
+                //     TxnModel.insertMany(txns, { ordered: false }, function (err, result) {
+                //         if (err) {
+                //             if (err.code === 11000) {
+                //                 resolve(err.result.result.insertedIds);
+                //             } else {
+                //                 reject(err);
+                //             }
+                //         }
+                //         resolve(result);    // Otherwise resolve
+                //     })
+                // );
+
                 const finalTxsAdded = await new Promise((resolve, reject) =>
-                    TxnModel.insertMany(finalTxns, { ordered: false }, function (err, result) {
+                    TxQueueModel.insertMany(txns, { ordered: false }, function (err, result) {
                         if (err) {
                             if (err.code === 11000) {
                                 resolve(err.result.result.insertedIds);
@@ -131,15 +148,15 @@ class Transactions {
                     })
                 );
 
-                await ContractStateModel.bulkWrite(contractsState.map(doc => ({
-                    updateOne: {
-                        filter: { address: doc.address },
-                        update: doc,
-                        upsert: true,
-                    }
-                })));
+                // await ContractStateModel.bulkWrite(contractsState.map(doc => ({
+                //     updateOne: {
+                //         filter: { address: doc.address },
+                //         update: doc,
+                //         upsert: true,
+                //     }
+                // })));
 
-                console.log(`Added ${finalTxsAdded.length}/${txns.length} txs and ${finalBlocksAdded.length}/${txBlocks.length} blocks.`);
+                console.log(`Added ${finalTxsAdded.length}/${txns.length} txs in the queue and ${finalBlocksAdded.length}/${txBlocks.length} blocks.`);
 
             } catch (err) {
                 console.log('Error in processTransactions');
@@ -149,6 +166,76 @@ class Transactions {
         } else {
             console.log(`${end} is lower than ${start}`);
         }
+    }
+
+    async processTxns() {
+        const txFromQueue = await TxQueueModel.find().sort({ blockId: 1 }).limit(50);
+
+        if (!txFromQueue.length) {
+            return true;
+        }
+
+        let tmpArr = [];
+        let blockArr = {};
+        txFromQueue.map((row, index) => {
+            const txId = JSON.parse(row.txID);
+            blockArr[row.blockId] = blockArr[row.blockId] || [];
+            blockArr[row.blockId]['blockId'] = row.blockId;
+            blockArr[row.blockId]['txID'] = txId;
+            blockArr[row.blockId]['timestamp'] = row.timestamp;
+            txId.map((r, k) => {
+                tmpArr[index] = tmpArr[index] || [];
+                tmpArr[index][k] = `${row.blockId}-${r}-${row.timestamp}`;
+            })
+        })
+
+        const processedTxQueue = tmpArr.flat().slice(0, 50);
+
+        let txns = await this.api.getTxn(processedTxQueue);
+
+        txns = await this.api.getContractAddrFromTxID(txns);
+
+        const reducedTxns = txns.map(txn => txnReducer(txn));
+
+        const contractsChecked = await this.api.checkIfContracts(reducedTxns);
+
+        const contractsState = await this.getContractState(reducedTxns);
+
+        const finalTxsAdded = await new Promise((resolve, reject) =>
+            TxnModel.insertMany(contractsChecked, { ordered: false }, (err, result) => {
+                if (err) {
+                    if (err.code === 11000) {
+                        resolve(err.result.result.insertedIds);
+                    } else {
+                        reject(err);
+                    }
+                }
+                resolve(result);    // Otherwise resolve
+            })
+        );
+
+        await ContractStateModel.bulkWrite(contractsState.map(doc => ({
+            updateOne: {
+                filter: { address: doc.address },
+                update: doc,
+                upsert: true,
+            }
+        })));
+
+        const remainingTxQueue = await removeValuesFromArray(processedTxQueue, blockArr);
+
+        // console.log("remainingTxQueue", remainingTxQueue);
+
+        await TxQueueModel.bulkWrite(remainingTxQueue.map(doc => ({
+            updateOne: {
+                filter: { blockId: doc.blockId },
+                update: doc
+            }
+        })));
+
+        await TxQueueModel.remove({ txID: "[]" }).exec();
+
+        console.log(`Added ${finalTxsAdded.length}/${txns.length} txs.`);
     }
 }
 

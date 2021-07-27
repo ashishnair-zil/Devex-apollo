@@ -147,9 +147,9 @@ class Api {
       body: JSON.stringify(data),
     });
     const parsedRes = await response.json();
-    const reducedTxs=[];
+    const reducedTxs = [];
     parsedRes.map(txresult => {
-      if(txresult.result){
+      if (txresult.result) {
         reducedTxs.push(txresult.result)
       }
       return true;
@@ -283,6 +283,90 @@ class Api {
       }
     });
     return contractArr;
+  }
+
+  async getTxnIdByTxBlocks(blocks) {
+    if (!blocks.length) {
+      return blocks;
+    }
+
+    const blockArr = [];
+    const timestampArr = [];
+    const data = blocks.map((block, index) => {
+      blockArr[index] = block.header.BlockNum;
+      timestampArr[index] = block.header.Timestamp;
+      return {
+        id: "1",
+        jsonrpc: "2.0",
+        method: "GetTransactionsForTxBlock",
+        params: [`${block.header.BlockNum}`],
+      }
+    })
+
+    const response = await fetch(this.networkUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const parsedRes = await response.json();
+
+    const reducedTxs = [];
+    parsedRes.map((txresult, index) => {
+      if (txresult.result) {
+        if (blockArr[index]) {
+          reducedTxs.push({
+            'blockId': blockArr[index],
+            'txID': JSON.stringify(txresult.result.flat()),
+            'txCount': txresult.result.flat().length,
+            'timestamp': parseInt(timestampArr[index])
+          })
+        }
+      }
+      return true;
+    });
+
+    return reducedTxs;
+  }
+
+  async getTxn(txns) {
+    if (!txns.length) {
+      return txns;
+    }
+    const timpstampArr = [];
+    const data = txns.map((txn, index) => {
+      const splitTxn = txn.split('-');
+      const blockId = splitTxn[0];
+      const ID = splitTxn[1];
+      timpstampArr[index] = splitTxn[2];
+      return {
+        id: "1",
+        jsonrpc: "2.0",
+        method: "GetTransaction",
+        params: [`${ID}`],
+      }
+    });
+    // console.log("data", data)
+    const response = await fetch(this.networkUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const parsedRes = await response.json();
+    // console.log("parsedRes", parsedRes)
+    const reducedTxs = [];
+    parsedRes.map((txresult, index) => {
+      if (txresult.result) {
+        txresult.result.timestamp = timpstampArr[index] ? timpstampArr[index] : undefined;
+        reducedTxs.push(txresult.result)
+      }
+      return true;
+    });
+
+    return reducedTxs.flat();
   }
 }
 

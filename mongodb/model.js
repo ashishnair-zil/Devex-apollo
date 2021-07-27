@@ -136,7 +136,20 @@ let Txn = new Schema({
   transitions: [TxTransition],
 });
 
+let TxQueue = new Schema({
+  blockId: {
+    type: Number,
+    unique: true
+  },
+  txID: {
+    type: String
+  },
+  txCount: Number,
+  timestamp:{ type: Number, index: true },
+});
+
 export const TransitionModel = mongoose.model("Transition", TxTransition);
 export const TxnModel = mongoose.model("Txn", Txn);
 export const TxBlockModel = mongoose.model("Block", TxBlock);
 export const ContractStateModel = mongoose.model("State", ContractState);
+export const TxQueueModel = mongoose.model("TxQueue", TxQueue);
