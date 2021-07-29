@@ -14,12 +14,22 @@ import swaggerDocument from './swagger/swagger.js';
 import { Routes } from './src/routes.js';
 const api = new Routes(express);
 
+import bodyParser from 'body-parser';
+
+import txStatusCodeFixtures from './src/datafixtures/txStatusCodeFixtures.js';
+
 // Constants
 const PORT = process.env.INTERNAL_PORT || 3000;
 const HOST = '0.0.0.0';
 
 // App
 const app = express();
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json())
 
 app.use(cors());
 
@@ -34,6 +44,11 @@ mongoose.connect(process.env.DOCUMENTDB_URI, {
   useUnifiedTopology: true,
   useCreateIndex: true,
   useFindAndModify: false
+});
+
+mongoose.connection.once("open", async () => {
+  console.log('Database connected successfully!!!');
+  txStatusCodeFixtures.init();
 });
 
 app.get('/ping', (req, res) => {

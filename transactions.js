@@ -197,7 +197,9 @@ class Transactions {
 
         const reducedTxns = txns.map(txn => txnReducer(txn));
 
-        const contractsChecked = await this.api.checkIfContracts(reducedTxns);
+        const txnWithStatus = await this.api.getTxnStatusFromRxID(reducedTxns);
+
+        const contractsChecked = await this.api.checkIfContracts(txnWithStatus);
 
         const contractsState = await this.getContractState(reducedTxns);
 

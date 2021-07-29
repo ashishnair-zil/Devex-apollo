@@ -81,7 +81,14 @@ export default {
           "200": {
             "description": "successful operation"
           }
-        }
+        },
+        "security": [
+          {
+            "api_key": [
+
+            ]
+          }
+        ]
       }
     },
     "/address/balance/{addressId}": {
@@ -109,7 +116,14 @@ export default {
           "200": {
             "description": "successful operation"
           }
-        }
+        },
+        "security": [
+          {
+            "api_key": [
+
+            ]
+          }
+        ]
       }
     },
     "/address/balance/{addressId}/token/{contractAddr}": {
@@ -145,7 +159,14 @@ export default {
           "200": {
             "description": "successful operation"
           }
-        }
+        },
+        "security": [
+          {
+            "api_key": [
+
+            ]
+          }
+        ]
       }
     },
     "/tx/{txId}": {
@@ -172,7 +193,48 @@ export default {
           "200": {
             "description": "successful operation"
           }
-        }
+        },
+        "security": [
+          {
+            "api_key": [
+
+            ]
+          }
+        ]
+      }
+    },
+    "/tx/status/{txId}": {
+      "get": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Find transactions status by ID",
+        "description": "Returns status record of transactions",
+        "operationId": "getTxStatusById",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "txId",
+            "in": "path",
+            "description": "Record of transactions to return",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          }
+        },
+        "security": [
+          {
+            "api_key": [
+
+            ]
+          }
+        ]
       }
     },
     "/block/{blockId}": {
@@ -215,6 +277,150 @@ export default {
           "200": {
             "description": "successful operation"
           }
+        },
+        "security": [
+          {
+            "api_key": [
+
+            ]
+          }
+        ]
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "Request for api token",
+        "description": "",
+        "operationId": "login",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Login object that needs to generate a access token.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Login"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Return api token and loggin status."
+          },
+          "400": {
+            "description": "Invalid body object.",
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "Register an app in database",
+        "description": "",
+        "operationId": "register",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Registration object that needs to create an app in Database.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Register"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Return api token and loggin status."
+          },
+          "400": {
+            "description": "Invalid body object.",
+          }
+        }
+      }
+    },
+    "/reset-secret": {
+      "post": {
+        "tags": [
+          "apps"
+        ],
+        "summary": "Reset app secret an app in database",
+        "description": "",
+        "operationId": "reset",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Reset object that needs to reset app secret in Database.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Reset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Return api token and loggin status."
+          },
+          "400": {
+            "description": "Invalid body object.",
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "x-access-token",
+      "in": "header"
+    }
+  },
+  "definitions": {
+    "Login": {
+      "type": "object",
+      "properties": {
+        "appId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "appSecret": {
+          "type": "string"
+        }
+      }
+    },
+    "Register": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "Reset": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "appId": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     }

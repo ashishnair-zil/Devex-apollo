@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "start-dev": "NODE_ENV=dev node -r dotenv/config index.js"
+    "start-dev": "node -r dotenv/config index.js"
   },
   "author": "",
   "license": "ISC",
@@ -16,9 +16,12 @@
     "@zilliqa-js/crypto": "^3.0.0",
     "@zilliqa-js/util": "^3.0.0",
     "@zilliqa-js/zilliqa": "^3.0.0",
+    "body-parser": "^1.19.0",
     "cors": "^2.8.5",
+    "crypto-js": "^4.1.1",
     "express": "^4.17.1",
     "jsonschema": "^1.4.0",
+    "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.33",
     "mongodb": "^3.5.9",
@@ -26,5 +29,8 @@
     "node-fetch": "^2.6.0",
     "swagger-ui-express": "^4.1.6",
     "tslib": "^2.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12"
   }
 }

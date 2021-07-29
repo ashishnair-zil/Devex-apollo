@@ -2,6 +2,7 @@ import crypto from '@zilliqa-js/crypto'
 import moment from 'moment-timezone';
 import pkg from '@zilliqa-js/util';
 const { BN, units } = pkg;
+import CryptoJS from 'crypto-js';
 
 const { getAddressFromPublicKey, toBech32Address, fromBech32Address } = crypto
 
@@ -51,4 +52,21 @@ export const convertZilToQa = (amountInZil) => {
     console.log(err);
     console.log('Error converting amount to QA')
   }
+}
+
+export const encrypt = (text) => {
+  return CryptoJS.AES.encrypt(text, process.env.APP_SECRET).toString();
+}
+
+export const decryt = (text) => {
+  const bytes = CryptoJS.AES.decrypt(text, process.env.APP_SECRET);
+  return bytes.toString(CryptoJS.enc.Utf8);
+}
+
+export const makeSalt = () => {
+  return Math.round(new Date().valueOf() * Math.random());
+}
+
+export const Md5 = (text) => {
+  return CryptoJS.MD5(text).toString();
 }

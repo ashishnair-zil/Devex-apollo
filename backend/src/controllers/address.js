@@ -1,5 +1,6 @@
 import { TxnModel, ContractStateModel } from "../models/model.js";
 import { convertToBech16Address, convertToBech32Address, addHexPrefix, convertToDateTime, convertZilToQa } from "../util.js";
+import { success, error } from '../http/restResponse.js';
 
 class Address {
 
@@ -9,98 +10,111 @@ class Address {
         this.getTokenBalanceByAddressId = this.getTokenBalanceByAddressId.bind(this);
     }
 
-    async search(req, res) { }
-
     async getBalance(address) {
-        let tx = await TxnModel.find({
-            $and: [
-                { 'receipt.success': true },
-                {
-                    $or: [{
-                        'fromAddr': address
-                    },
+        try {
+            let tx = await TxnModel.find({
+                $and: [
+                    { 'receipt.success': true },
                     {
-                        'toAddr': address
+                        $or: [{
+                            'fromAddr': address
+                        },
+                        {
+                            'toAddr': address
+                        }]
                     }]
-                }]
-        },
-            {
-                toAddr: 1,
-                fromAddr: 1,
-                amount: 1,
-                'receipt.cumulative_gas': 1,
-                gasPrice: 1
             },
-            {
-                sort: {
-                    'timestamp': 1
+                {
+                    toAddr: 1,
+                    fromAddr: 1,
+                    amount: 1,
+                    'receipt.cumulative_gas': 1,
+                    gasPrice: 1
+                },
+                {
+                    sort: {
+                        'timestamp': 1
+                    }
+                });
+
+            let currentBalance = 0;
+
+            let initialBalance = 0;
+
+            let totalDeductBalance = 0;
+
+            let totalFee = 0;
+
+            await tx.map((row, idx) => {
+                if (idx > 0) {
+                    if (row.fromAddr === address) {
+
+                        currentBalance -= parseFloat(row.amount);
+
+                        totalDeductBalance += parseFloat(row.amount);
+
+                    } else if (row.toAddr === address) {
+
+                        currentBalance += parseFloat(row.amount);
+
+                    }
+
+                    totalFee += row.receipt.cumulative_gas * row.gasPrice;
+                } else {
+                    currentBalance = parseFloat(row.amount);
+
+                    initialBalance = row.amount;
                 }
+
+                return row;
             });
 
-        let currentBalance = 0;
-
-        let initialBalance = 0;
-
-        let totalDeductBalance = 0;
-
-        let totalFee = 0;
-
-        await tx.map((row, idx) => {
-            if (idx > 0) {
-                if (row.fromAddr === address) {
-
-                    currentBalance -= parseFloat(row.amount);
-
-                    totalDeductBalance += parseFloat(row.amount);
-
-                } else if (row.toAddr === address) {
-
-                    currentBalance += parseFloat(row.amount);
-
-                }
-
-                totalFee += row.receipt.cumulative_gas * row.gasPrice;
-            } else {
-                currentBalance = parseFloat(row.amount);
-
-                initialBalance = row.amount;
+            if (currentBalance) {
+                currentBalance = currentBalance - totalFee;
             }
 
-            return row;
-        });
-
-        if (currentBalance) {
-            currentBalance = currentBalance - totalFee;
-        }
-
-        return {
-            initialBalance,
-            currentBalance,
-            totalDeductBalance
+            return {
+                initialBalance,
+                currentBalance,
+                totalDeductBalance
+            }
+        } catch (err) {
+            console.log("Error: ", err);
+            return err;
         }
     }
 
     async getBalanceByAddressId(req, res) {
-        const address = convertToBech16Address(req.params.id);
-        
-        let balance = await this.getBalance(address);
+        try {
+            const address = convertToBech16Address(req.params.id);
 
-        balance = balance && balance.currentBalance ? balance.currentBalance : 0;
+            let balance = await this.getBalance(address);
 
-        return res.json({ 'data': { 'balance': balance } });
+            balance = balance && balance.currentBalance ? balance.currentBalance : 0;
+
+            return res.json(success({ 'balance': balance }));
+        } catch (err) {
+            console.log("Error: ", err);
+            res.status(500).json(error(500, 'Something went wrong.'));
+        }
+
     }
 
     async getTokenBalanceByAddressId(req, res) {
-        console.log("1",1)
-        const address = convertToBech16Address(req.params.id);
+        try {
+            const address = convertToBech16Address(req.params.id);
 
-        const contractAddr = convertToBech16Address(req.params.contractAddr);
+            const contractAddr = convertToBech16Address(req.params.contractAddr);
 
-        let balance = await this.getFtToken(address, contractAddr);
+            let balance = await this.getFtToken(address, contractAddr);
 
-        balance = balance && balance[0] && balance[0].balances ? parseFloat(balance[0].balances) : 0;
+            balance = balance && balance[0] && balance[0].balances ? parseFloat(balance[0].balances) : 0;
 
-        return res.json({ 'data': { 'balance': balance } });
+            return res.json(success({ 'balance': balance }));
+        } catch (err) {
+            console.log("Error: ", err);
+            res.status(500).json(error(500, 'Something went wrong.'));
+        }
     }
 
     async searchById(req, res) {
@@ -151,15 +165,20 @@ class Address {
 
             return res.json({ 'data': response });
         } catch (err) {
-            console.log(err)
-            res.status(400).send({ error: err });
+            console.log("Error: ", err);
+            res.status(500).json(error(500, 'Something went wrong.'));
         }
     }
 
     async getTxCount(address) {
-        const condition = { $or: [{ 'fromAddr': address }, { 'toAddr': address }, { 'receipt.transitions.addr': address }, { 'receipt.transitions.msg._recipient': address }, { 'contractAddr': address }] };
+        try {
+            const condition = { $or: [{ 'fromAddr': address }, { 'toAddr': address }, { 'receipt.transitions.addr': address }, { 'receipt.transitions.msg._recipient': address }, { 'contractAddr': address }] };
 
-        return await TxnModel.count(condition);
+            return await TxnModel.count(condition);
+        } catch (err) {
+            console.log("Error: ", err);
+            return err;
+        }
     }
 
     async getTxData(address, skip, perPage, filters = null) {
@@ -260,27 +279,32 @@ class Address {
             })
             return tx;
         } catch (err) {
-            console.log(err)
+            console.log("Error: ", err);
             return err;
         }
     }
 
     async getTokenByAddress(address, contractAddr = null) {
-        const result = {};
+        try {
+            const result = {};
 
-        const nftToken = await this.getNftToken(address, contractAddr);
+            const nftToken = await this.getNftToken(address, contractAddr);
 
-        if (nftToken.length) {
-            result.nftToken = nftToken;
+            if (nftToken.length) {
+                result.nftToken = nftToken;
+            }
+
+            const ftTokens = await this.getFtToken(address, contractAddr);
+
+            if (ftTokens.length) {
+                result.ftTokens = ftTokens;
+            }
+
+            return result;
+        } catch (err) {
+            console.log("Error: ", err);
+            return err;
         }
-
-        const ftTokens = await this.getFtToken(address, contractAddr);
-
-        if (ftTokens.length) {
-            result.ftTokens = ftTokens;
-        }
-
-        return result;
     }
 
     async getNftToken(address, contractAddr = null) {
@@ -323,6 +347,7 @@ class Address {
             });
             return resultArr;
         } catch (err) {
+            console.log("Error: ", err);
             return err;
         }
     }
@@ -367,50 +392,55 @@ class Address {
             });
             return resultArr;
         } catch (err) {
+            console.log("Error: ", err);
             return err;
         }
     }
 
     async getContractByAddress(address) {
+        try {
+            const condition = { 'fromAddr': address, 'toAddr': '0x0000000000000000000000000000000000000000' };
 
-        const condition = { 'fromAddr': address, 'toAddr': '0x0000000000000000000000000000000000000000' };
+            // tx.totalRecords = await TxnModel.count(condition);
 
-        // tx.totalRecords = await TxnModel.count(condition);
+            // tx.numOfPages = Math.ceil(tx.totalRecords / perPage);
 
-        // tx.numOfPages = Math.ceil(tx.totalRecords / perPage);
+            let tx = await TxnModel.find(condition).sort({ 'timestamp': -1 });
+            tx = JSON.parse(JSON.stringify(tx));
 
-        let tx = await TxnModel.find(condition).sort({ 'timestamp': -1 });
-        tx = JSON.parse(JSON.stringify(tx));
-
-        const txArr = [];
-        await tx.map((row) => {
-            txArr[row.contractAddr] = row.contractAddr;
-        })
-
-
-        const contractState = await ContractStateModel.find({ address: { $in: Object.keys(txArr) } });
-        const contractArr = [];
-        await contractState.map((row) => {
-            contractArr[row.address] = row;
-        })
+            const txArr = [];
+            await tx.map((row) => {
+                txArr[row.contractAddr] = row.contractAddr;
+            })
 
 
-        tx = await tx.map((row) => {
-            if (contractArr[row.contractAddr]) {
-                row.state = contractArr[row.contractAddr];
-            }
+            const contractState = await ContractStateModel.find({ address: { $in: Object.keys(txArr) } });
+            const contractArr = [];
+            await contractState.map((row) => {
+                contractArr[row.address] = row;
+            })
 
-            return row;
-        })
 
-        return tx;
+            tx = await tx.map((row) => {
+                if (contractArr[row.contractAddr]) {
+                    row.state = contractArr[row.contractAddr];
+                }
 
+                return row;
+            })
+
+            return tx;
+        } catch (err) {
+            console.log("Error: ", err);
+            return err;
+        }
     }
 
     async getContractStateByAddress(address) {
         try {
             return await ContractStateModel.findOne({ address: address });
         } catch (err) {
+            console.log("Error: ", err);
             return err;
         }
     }

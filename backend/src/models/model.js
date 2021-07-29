@@ -108,6 +108,11 @@ let ContractState = new Schema({
   state: Schema.Types.Mixed,
 });
 
+let TxStatusCodes = new Schema({
+  status: { type: Number, index: true },
+  description: String
+});
+
 let Txn = new Schema({
   customId: {
     type: String,
@@ -134,9 +139,27 @@ let Txn = new Schema({
   timestamp: { type: Number, index: true },
   blockId: Number,
   transitions: [TxTransition],
+  modificationState: Number,
+  status: Number,
+  success: Boolean,
+  epochInserted: String,
+  epochUpdated: String
 });
+
+let Apps = new Schema({
+  name: { type: String, unique: true },
+  appId: { type: Number, index: true },
+  appSecret: String,
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active'
+  }
+}, { timestamps: true });
 
 export const TransitionModel = mongoose.model("Transition", TxTransition);
 export const TxnModel = mongoose.model("Txn", Txn);
 export const TxBlockModel = mongoose.model("Block", TxBlock);
 export const ContractStateModel = mongoose.model("State", ContractState);
+export const AppModel = mongoose.model("Apps", Apps);
+export const TxStatusCodesModel = mongoose.model("TxStatusCodes", TxStatusCodes);

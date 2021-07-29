@@ -108,6 +108,11 @@ let ContractState = new Schema({
   state: Schema.Types.Mixed,
 });
 
+let TxStatusCodes = new Schema({
+  status: { type: Number, index: true },
+  description: String
+});
+
 let Txn = new Schema({
   customId: {
     type: String,
@@ -134,6 +139,11 @@ let Txn = new Schema({
   timestamp: { type: Number, index: true },
   blockId: Number,
   transitions: [TxTransition],
+  modificationState: Number,
+  status: Number,
+  success: Boolean,
+  epochInserted: String,
+  epochUpdated: String
 });
 
 let TxQueue = new Schema({
@@ -145,7 +155,7 @@ let TxQueue = new Schema({
     type: String
   },
   txCount: Number,
-  timestamp:{ type: Number, index: true },
+  timestamp: { type: Number, index: true },
 });
 
 export const TransitionModel = mongoose.model("Transition", TxTransition);

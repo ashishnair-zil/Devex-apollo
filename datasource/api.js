@@ -368,6 +368,47 @@ class Api {
 
     return reducedTxs.flat();
   }
+
+  async getTxnStatusFromRxID(txns) {
+    if (!txns.length) {
+      return txns;
+    }
+
+    const data = txns.map((txn) => {
+      return {
+        id: txn.ID,
+        jsonrpc: "2.0",
+        method: "GetTransactionStatus",
+        params: [`${stripHexPrefix(txn.ID)}`],
+      }
+    });
+
+    const response = await fetch(this.networkUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const parsedRes = await response.json();
+
+    const txArr = [];
+    parsedRes.map((row) => {
+      txArr[row.id] = row.result
+    })
+
+    txns.map((row) => {
+      if (txArr[row.ID]) {
+        row.epochInserted = txArr[row.ID].epochInserted;
+        row.epochUpdated = txArr[row.ID].epochUpdated;
+        row.status = txArr[row.ID].status;
+        row.success = txArr[row.ID].success;
+      }
+      return row;
+    })
+
+    return txns;
+  }
 }
 
 export default Api;

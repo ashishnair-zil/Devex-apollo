@@ -1,30 +1,58 @@
-import { TxnModel } from "../models/model.js";
+import { TxnModel, TxStatusCodesModel } from "../models/model.js";
 import { convertToBech32Address, addHexPrefix, stripHexPrefix, convertToDateTime, convertZilToQa } from "../util.js";
-
+import { success, error } from '../http/restResponse.js';
 class Transaction {
 
     constructor() {
-        this.search = this.search.bind(this);
+        this.searchTxStatusById = this.searchTxStatusById.bind(this);
     }
-
-    async search(req, res) { }
 
     async searchById(req, res) {
         try {
             const txId = stripHexPrefix(req.params.id);
-            let tx = await TxnModel.findOne({ 'ID': txId });
+
+            const tx = await TxnModel.findOne({ 'ID': txId });
+
+            let response = {};
             if (tx) {
-                tx.fee = tx.receipt.cumulative_gas * tx.gasPrice;
-                tx.date = convertToDateTime(tx.timestamp);
-                tx.ID = addHexPrefix(tx.ID);
-            } else {
-                tx = [];
+                response = JSON.parse(JSON.stringify(tx));
+                response.fee = tx.receipt.cumulative_gas * tx.gasPrice;
+                response.date = convertToDateTime(tx.timestamp);
             }
-            return res.json({ 'data': tx });
+            res.json(success(response));
         } catch (err) {
             console.log(err)
             res.status(400).send({ error: err });
         }
+    }
+
+    async searchTxStatusById(req, res) {
+        try {
+            const txId = stripHexPrefix(req.params.id);
+
+            const tx = await TxnModel.findOne({ 'ID': txId }, { 'status': 1, 'ID': 1, 'success': 1 });
+
+            const response = {};
+            if (tx) {
+                const txStatusList = await this.getStatusList();
+                response.success = tx.success;
+                response.status = tx.status;
+                response.statusReason = txStatusList && txStatusList[tx.status] ? txStatusList[tx.status].description : undefined;
+            }
+            res.status(200).json(success(response));
+        } catch (err) {
+            console.log("Error:", err)
+            res.status(400).send({ error: err });
+        }
+    }
+
+    async getStatusList() {
+        const result = await TxStatusCodesModel.find();
+        const statusArr = [];
+        result.map((row) => {
+            statusArr[row.status] = row;
+        })
+        return statusArr;
     }
 }
 
