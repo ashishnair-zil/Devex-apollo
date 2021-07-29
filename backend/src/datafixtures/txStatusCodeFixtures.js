@@ -18,9 +18,9 @@ class TxStatusCodeFixtures {
                         resp.save(function (err) {
                             if (!err) {
                                 if (addFlag)
-                                    console.log(`TxStatusCodes ${row.slug} added successfully.`);
+                                    console.log(`TxStatusCodes ${row.status} added successfully.`);
                                 else
-                                    console.log(`TxStatusCodes ${row.slug} updated successfully.`);
+                                    console.log(`TxStatusCodes ${row.status} updated successfully.`);
                             } else {
                                 console.log("Error: could not save txStatusCodes " + err);
                             }
