@@ -143,7 +143,11 @@ let Txn = new Schema({
   status: Number,
   success: Boolean,
   epochInserted: String,
-  epochUpdated: String
+  epochUpdated: String,
+  fetchStatusCount: {
+    type: Number,
+    default: 1
+  }
 });
 
 let TxQueue = new Schema({

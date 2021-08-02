@@ -22,6 +22,8 @@ class Transactions {
             this.loadData(lastBlockID, latestBlockOnNtk);
 
             this.processTxns();
+
+            this.updateStatusOfPendingTxns();
         } catch (err) {
             console.log('Error in processTransactions')
             console.log(err)
@@ -77,9 +79,9 @@ class Transactions {
                 if (start + blocksPerRequest > end) {
                     blocksPerRequest = Math.abs(end - start);
                 }
-                
+
                 const blocksRange = [...range(start, start + blocksPerRequest)];
-                
+
                 const txBlocks = await this.api.getTxBlocks(blocksRange);
 
                 const reducedBlocks = txBlocks.map(block => txBlockReducer(block));
@@ -169,7 +171,7 @@ class Transactions {
     }
 
     async processTxns() {
-        const txFromQueue = await TxQueueModel.find().sort({ blockId: 1 }).limit(50);
+        const txFromQueue = await TxQueueModel.find().sort({ blockId: 1 }).limit(BLOCKS_PER_REQUEST);
 
         if (!txFromQueue.length) {
             return true;
@@ -238,6 +240,32 @@ class Transactions {
         await TxQueueModel.remove({ txID: "[]" }).exec();
 
         console.log(`Added ${finalTxsAdded.length}/${txns.length} txs.`);
+    }
+
+    async updateStatusOfPendingTxns() {
+        const txns = await TxnModel.find({ 'status': { $in: [1, 2, 4, 5, 6] }, 'fetchStatusCount': { $lt: 10 } }).sort({ blockId: 1 }).limit(BLOCKS_PER_REQUEST);
+
+        if (!txns.length) {
+            return true;
+        }
+
+        const txnsStatus = await this.api.getTxnStatusFromRxID(txns);
+
+        await TxnModel.bulkWrite(txnsStatus.map(doc => ({
+            updateOne: {
+                filter: { ID: doc.ID },
+                update: {
+                    'status': doc.status,
+                    'modificationState': doc.modificationState,
+                    'success': doc.success,
+                    'epochInserted': doc.epochInserted,
+                    'epochUpdated': doc.epochUpdated,
+                    'fetchStatusCount': doc.fetchStatusCount ? doc.fetchStatusCount + 1 : 1
+                }
+            }
+        })));
+
+        console.log(`Updated status of ${txns.length} txs.`);
     }
 }
 
