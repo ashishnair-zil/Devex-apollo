@@ -316,10 +316,11 @@ class Api {
     parsedRes.map((txresult, index) => {
       if (txresult.result) {
         if (blockArr[index]) {
+          const filterNullValue = txresult.result.flat().filter((el)=>el != null);
           reducedTxs.push({
             'blockId': blockArr[index],
-            'txID': JSON.stringify(txresult.result.flat()),
-            'txCount': txresult.result.flat().length,
+            'txID': JSON.stringify(filterNullValue),
+            'txCount': filterNullValue.length,
             'timestamp': parseInt(timestampArr[index])
           })
         }
