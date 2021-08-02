@@ -399,6 +399,7 @@ class Api {
 
     txns.map((row) => {
       if (txArr[row.ID]) {
+        row.modificationState = txArr[row.ID].modificationState;
         row.epochInserted = txArr[row.ID].epochInserted;
         row.epochUpdated = txArr[row.ID].epochUpdated;
         row.status = txArr[row.ID].status;
