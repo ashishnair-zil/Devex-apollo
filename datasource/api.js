@@ -208,6 +208,11 @@ class Api {
         let contractobj = {};
         contractobj['address'] = addrArr[index]
         contractobj['state'] = parsedRes[index] && parsedRes[index].result ? parsedRes[index].result : {};
+
+        if (contractobj['state'] && contractobj['state']['exception']) {
+          contractobj['state']['exception'] = JSON.stringify(contractobj['state']['exception']);
+        }
+
         contractArr.push(contractobj);
       }
     });
