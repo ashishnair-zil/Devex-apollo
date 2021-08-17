@@ -51,7 +51,7 @@ class Address {
 
                         totalDeductBalance += parseFloat(row.amount);
 
-                    } else if (row.toAddr === address && row.receipt.success) {
+                    } else if (row.toAddr === address && row.receipt.success && row.type==='payment') {
 
                         currentBalance += parseFloat(row.amount);
 
