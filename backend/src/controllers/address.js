@@ -13,22 +13,19 @@ class Address {
     async getBalance(address) {
         try {
             let tx = await TxnModel.find({
-                $and: [
-                    { 'receipt.success': true },
-                    {
-                        $or: [{
-                            'fromAddr': address
-                        },
-                        {
-                            'toAddr': address
-                        }]
-                    }]
+                $or: [{
+                    'fromAddr': address
+                },
+                {
+                    'toAddr': address
+                }]
             },
                 {
                     toAddr: 1,
                     fromAddr: 1,
                     amount: 1,
                     'receipt.cumulative_gas': 1,
+                    'receipt.success': 1,
                     gasPrice: 1
                 },
                 {
@@ -47,13 +44,13 @@ class Address {
 
             await tx.map((row, idx) => {
                 if (idx > 0) {
-                    if (row.fromAddr === address) {
+                    if (row.fromAddr === address && row.receipt.success) {
 
                         currentBalance -= parseFloat(row.amount);
 
                         totalDeductBalance += parseFloat(row.amount);
 
-                    } else if (row.toAddr === address) {
+                    } else if (row.toAddr === address && row.receipt.success) {
 
                         currentBalance += parseFloat(row.amount);
 
@@ -61,9 +58,11 @@ class Address {
 
                     totalFee += row.receipt.cumulative_gas * row.gasPrice;
                 } else {
-                    currentBalance = parseFloat(row.amount);
+                    if(row.receipt.success){
+                        currentBalance = parseFloat(row.amount);
 
-                    initialBalance = row.amount;
+                        initialBalance = row.amount;
+                    }
                 }
 
                 return row;
