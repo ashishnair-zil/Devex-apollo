@@ -21,6 +21,7 @@ class Address {
                 }]
             },
                 {
+                    type:1,
                     toAddr: 1,
                     fromAddr: 1,
                     amount: 1,
