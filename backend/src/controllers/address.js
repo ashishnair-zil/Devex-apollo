@@ -44,7 +44,7 @@ class Address {
 
             await tx.map((row, idx) => {
                 if (idx > 0) {
-                    if (row.fromAddr === address && row.receipt.success) {
+                    if (row.fromAddr === address && row.receipt.success && row.type==='payment') {
 
                         currentBalance -= parseFloat(row.amount);
 
@@ -58,7 +58,7 @@ class Address {
 
                     totalFee += row.receipt.cumulative_gas * row.gasPrice;
                 } else {
-                    if(row.receipt.success){
+                    if(row.receipt.success  && row.type==='payment'){
                         currentBalance = parseFloat(row.amount);
 
                         initialBalance = row.amount;
