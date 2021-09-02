@@ -6,7 +6,7 @@ import { range } from "./util.js";
 
 import GQLSchema from "./gql/schema2.js";
 import Api from "./datasource/api.js";
-import config from "./config/config.js";
+// import config from "./config/config.js";
 
 import {
   txBlockReducer,
@@ -42,7 +42,14 @@ const server = new ApolloServer({
 
 server.applyMiddleware({ app, path: "/" });
 
-mongoose.connect(config.dbUrl, { ...config.mongooseOpts });
+// mongoose.connect(config.dbUrl, { ...config.mongooseOpts });
+
+mongoose.connect(process.env.DOCUMENTDB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+  useFindAndModify: false
+});
 
 let connection = mongoose.connection;
 
